@@ -233,13 +233,21 @@ public abstract class K8sTaskAdapter implements TaskAdapter<Pod, Job>
     mainContainer.setArgs(Collections.singletonList(Joiner.on(" ").join(context.getComamnd())));
 
     mainContainer.setName("main");
-    ImmutableMap<String, Quantity> resources = ImmutableMap.of(
+    ImmutableMap<String, Quantity> request_resources = ImmutableMap.of(
+        "cpu",
+        new Quantity("1000", "m"),
+        "memory",
+        new Quantity(String.valueOf((long)(containerSize * 0.25)))
+    );
+
+    ImmutableMap<String, Quantity> limit_resources = ImmutableMap.of(
         "cpu",
         new Quantity("1000", "m"),
         "memory",
         new Quantity(String.valueOf(containerSize))
     );
-    mainContainer.setResources(new ResourceRequirementsBuilder().withRequests(resources).withLimits(resources).build());
+
+    mainContainer.setResources(new ResourceRequirementsBuilder().withRequests(request_resources).withLimits(limit_resources).build());
     return mainContainer;
   }
 
