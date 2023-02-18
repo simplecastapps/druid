@@ -503,7 +503,7 @@ public class TaskQueue
       Preconditions.checkNotNull(task, "task");
       if (tasks.size() >= config.getMaxSize()) {
         tasks.values().forEach(t -> {
-          log.info("existing task %s", t.getId());
+          log.info("existing task %s type %s group %s", t.getId(), task.getType(), task.getGroupId());
         });
       }
       Preconditions.checkState(tasks.size() < config.getMaxSize(), "Too many tasks (max = %,d)", config.getMaxSize());

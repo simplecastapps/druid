@@ -152,6 +152,7 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
   @Override
   public ListenableFuture<TaskStatus> run(Task task)
   {
+    log.info("asked to run task %s", task.getId());
     synchronized (tasks) {
       tasks.computeIfAbsent(
           task.getId(), k -> new K8sWorkItem(
@@ -159,10 +160,12 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
               task,
               exec.submit(() -> {
                 K8sTaskId k8sTaskId = new K8sTaskId(task);
+                log.info("preparing to run k8s task %s", k8sTaskId);
                 try {
                   JobResponse completedPhase;
                   Optional<Job> existingJob = client.jobExists(k8sTaskId);
                   if (!existingJob.isPresent()) {
+                    log.info("existing job was not present %s", k8sTaskId);
                     PeonCommandContext context = new PeonCommandContext(
                         generateCommand(task),
                         javaOpts(task),
@@ -176,21 +179,28 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                         KubernetesTaskRunnerConfig.toMilliseconds(k8sConfig.k8sjobLaunchTimeout),
                         TimeUnit.MILLISECONDS
                     );
-                    log.info("Job %s launched in k8s", k8sTaskId);
+                    log.info("Job %s launched in k8s, monitoring", k8sTaskId);
                     completedPhase = monitorJob(peonPod, k8sTaskId);
                   } else {
+                    log.info("existing job was present %s", k8sTaskId);
                     Job job = existingJob.get();
                     if (job.getStatus().getActive() == null) {
+                      log.info("existing job was not active %s", k8sTaskId);
                       if (job.getStatus().getSucceeded() != null) {
+                        log.info("existing job was not active and did not succeeded %s", k8sTaskId);
                         completedPhase = new JobResponse(job, PeonPhase.SUCCEEDED);
                       } else {
+                        log.info("existing job was not active and did not succeed %s", k8sTaskId);
                         completedPhase = new JobResponse(job, PeonPhase.FAILED);
                       }
                     } else {
+                      log.info("existing job is active, monitoring %s", k8sTaskId);
+
                       // the job is active lets monitor it
                       completedPhase = monitorJob(k8sTaskId);
                     }
                   }
+                  log.info("finished waiting for task %s phase %s", k8sTaskId, completedPhase.getPhase());
                   TaskStatus status;
                   if (PeonPhase.SUCCEEDED.equals(completedPhase.getPhase())) {
                     status = TaskStatus.success(task.getId());
@@ -204,6 +214,7 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                     status = status.withDuration(completedPhase.getJobDuration().get());
                   }
                   updateStatus(task, status);
+                  log.info("returning from KubernetesTaskRunner run");
                   return status;
                 }
                 catch (Exception e) {
@@ -211,6 +222,7 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                   throw e;
                 }
                 finally {
+                  log.info("cleaning up task %s", task.getId());
                   // publish task logs
                   Path log = Files.createTempFile(task.getId(), "log");
                   try {
@@ -226,11 +238,15 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                   }
                   client.cleanUpJob(new K8sTaskId(task.getId()));
                   synchronized (tasks) {
+
+                    KubernetesTaskRunner.log.info("cleaning up task %s task length %d", task.getId(), tasks.size());
+
                     tasks.remove(task.getId());
                   }
                 }
               })
           ));
+      log.info("placed task %s into tasks now sized %s", task.getId(), tasks.size());
       return tasks.get(task.getId()).getResult();
     }
   }
