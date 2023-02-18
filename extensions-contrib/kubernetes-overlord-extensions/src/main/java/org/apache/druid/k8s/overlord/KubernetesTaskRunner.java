@@ -254,6 +254,9 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
       int after = tasks.size();
       if (before != after) {
         log.info("placed task %s into before %d after %d", task.getId(), before, after);
+        tasks.values().forEach(t -> {
+          KubernetesTaskRunner.log.info("task in k8staskrunner %s", task.getId());
+        });
       }
       return tasks.get(task.getId()).getResult();
     }
