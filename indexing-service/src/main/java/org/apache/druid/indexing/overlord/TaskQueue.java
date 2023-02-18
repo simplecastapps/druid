@@ -501,7 +501,7 @@ public class TaskQueue
     try {
       Preconditions.checkState(active, "Queue is not active!");
       Preconditions.checkNotNull(task, "task");
-      if tasks.size() >= config.getMaxSize() {
+      if (tasks.size() >= config.getMaxSize()) {
         tasks.values().forEach(t -> {
           log.info("existing task %s", t.getId());
         });
