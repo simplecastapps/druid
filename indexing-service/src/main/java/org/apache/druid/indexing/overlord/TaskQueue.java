@@ -173,6 +173,7 @@ public class TaskQueue
     try {
       Preconditions.checkState(!active, "queue must be stopped");
       active = true;
+      log.info("starting simplecast modified TaskQueue");
       syncFromStorage();
       // Mark these tasks as failed as they could not reacuire the lock
       // Clean up needs to happen after tasks have been synced from storage
@@ -500,6 +501,11 @@ public class TaskQueue
     try {
       Preconditions.checkState(active, "Queue is not active!");
       Preconditions.checkNotNull(task, "task");
+      if tasks.size() >= config.getMaxSize() {
+        tasks.values().forEach(t -> {
+          log.info("existing task %s", t.getId());
+        });
+      }
       Preconditions.checkState(tasks.size() < config.getMaxSize(), "Too many tasks (max = %,d)", config.getMaxSize());
 
       // If this throws with any sort of exception, including TaskExistsException, we don't want to
