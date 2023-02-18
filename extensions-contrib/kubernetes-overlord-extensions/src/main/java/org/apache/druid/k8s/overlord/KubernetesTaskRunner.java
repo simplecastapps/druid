@@ -152,8 +152,11 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
   @Override
   public ListenableFuture<TaskStatus> run(Task task)
   {
-    log.info("asked to run task %s", task.getId());
+    // log.info("asked to run task %s", task.getId());
     synchronized (tasks) {
+      // log.info("asked to run task %s", task.getId());
+
+      int before = tasks.size();
       tasks.computeIfAbsent(
           task.getId(), k -> new K8sWorkItem(
               client,
@@ -239,14 +242,19 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                   client.cleanUpJob(new K8sTaskId(task.getId()));
                   synchronized (tasks) {
 
-                    KubernetesTaskRunner.log.info("cleaning up task %s task length %d", task.getId(), tasks.size());
+                    KubernetesTaskRunner.log.info("about to clean up task %s task tasks len %d", task.getId(), tasks.size());
 
                     tasks.remove(task.getId());
+
+                    KubernetesTaskRunner.log.info("just cleaned up up task %s task len %d", task.getId(), tasks.size());
                   }
                 }
               })
           ));
-      log.info("placed task %s into tasks now sized %s", task.getId(), tasks.size());
+      int after = tasks.size();
+      if (before != after) {
+        log.info("placed task %s into before %d after %d", task.getId(), before, after);
+      }
       return tasks.get(task.getId()).getResult();
     }
   }
