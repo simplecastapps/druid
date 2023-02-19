@@ -134,7 +134,7 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
     this.node = node;
     this.cleanupExecutor = Executors.newScheduledThreadPool(1);
     this.exec = MoreExecutors.listeningDecorator(
-        Execs.multiThreaded(taskQueueConfig.getMaxSize() * 10, "k8s-task-runner-%d")
+        Execs.multiThreaded(taskQueueConfig.getMaxSize() * 50, "k8s-task-runner-%d")
     );
     Preconditions.checkArgument(
         taskQueueConfig.getMaxSize() < Integer.MAX_VALUE,
