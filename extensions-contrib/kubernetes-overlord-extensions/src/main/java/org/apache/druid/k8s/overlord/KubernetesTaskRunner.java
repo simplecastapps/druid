@@ -180,7 +180,7 @@ public class KubernetesTaskRunner implements TaskLogStreamer, TaskRunner
                     completedPhase = monitorJob(peonPod, k8sTaskId);
                   } else {
                     Job job = existingJob.get();
-                    if (job.getStatus().getActive() == null) {
+                    if (job.getStatus() != null && job.getStatus().getActive() == null && (job.getStatus().getFailed() != null || job.getStatus().getSucceeded() !=null)) {
                       if (job.getStatus().getSucceeded() != null) {
                         completedPhase = new JobResponse(job, PeonPhase.SUCCEEDED);
                       } else {
