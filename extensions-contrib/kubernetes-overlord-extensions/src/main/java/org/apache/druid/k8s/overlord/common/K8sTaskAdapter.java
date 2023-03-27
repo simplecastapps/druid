@@ -230,7 +230,7 @@ public abstract class K8sTaskAdapter implements TaskAdapter<Pod, Job>
     mainContainer.setName("main");
     ImmutableMap<String, Quantity> request_resources = ImmutableMap.of(
         "cpu",
-        new Quantity("1000", "m"),
+        new Quantity("100", "m"),
         "memory",
         new Quantity(String.valueOf((long)(containerSize * 0.25)))
     );
