@@ -220,6 +220,7 @@ public abstract class K8sTaskAdapter implements TaskAdapter<Pod, Job>
     // remove probes
     mainContainer.setReadinessProbe(null);
     mainContainer.setLivenessProbe(null);
+    mainContainer.setStartupProbe(null);
 
     setupPorts(mainContainer);
     addEnvironmentVariables(mainContainer, context, taskContents);
